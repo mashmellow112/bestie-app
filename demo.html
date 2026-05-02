@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Demo - Bestie</title>
+    <link rel="icon" type="image/jpeg" href="assets/img/Screenshot%202026-04-22%20235700.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'outfit': ['Outfit', 'sans-serif'] },
+                    colors: {
+                        'bestie-pink': '#FF6B9D',
+                        'bestie-purple': '#C084FC',
+                        'bestie-cyan': '#22D3EE',
+                        'bestie-dark': '#0A0A0F',
+                        'bestie-card': '#12121A',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0A0A0F;
+            background-image: 
+                radial-gradient(circle at top right, rgba(255, 107, 157, 0.1), transparent 50%),
+                radial-gradient(circle at bottom left, rgba(34, 211, 238, 0.1), transparent 50%);
+            height: 100vh;
+        }
+        .chat-user { @apply bg-gradient-to-r from-bestie-pink to-bestie-purple text-white p-4 rounded-2xl rounded-tr-none ml-12 shadow-lg; }
+        .chat-bestie { @apply bg-white/10 backdrop-blur-md text-white p-4 rounded-2xl rounded-tl-none mr-12 border border-white/5; }
+    </style>
+</head>
+<body class="font-outfit text-white overflow-hidden flex flex-col">
+
+    <!-- Simple Header -->
+    <nav class="p-4 border-b border-white/5 bg-bestie-dark/50 backdrop-blur-xl">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-bestie-pink to-bestie-purple flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </div>
+                <span class="font-bold">Bestie <span class="text-bestie-cyan">Demo</span></span>
+            </a>
+            <a href="pricing.html" class="text-sm font-semibold bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full transition-all">Unlock Full App</a>
+        </div>
+    </nav>
+
+    <!-- Focused Demo Area -->
+    <main class="flex-1 max-w-4xl w-full mx-auto flex flex-col p-4 md:p-6 overflow-hidden">
+        
+        <!-- Demo Info Badge -->
+        <div class="text-center mb-6">
+            <span class="px-3 py-1 bg-bestie-cyan/10 border border-bestie-cyan/20 rounded-full text-[10px] font-bold tracking-widest uppercase text-bestie-cyan">Try Sample Scenarios Below</span>
+        </div>
+
+        <!-- Chat Viewport -->
+        <div id="demoChat" class="flex-1 overflow-y-auto space-y-6 pr-2 mb-6 scrollbar-thin">
+            <!-- Messages from script.js will appear here -->
+        </div>
+
+        <!-- Controls Area -->
+        <div class="space-y-4">
+            <!-- Scenario Buttons -->
+            <div class="flex flex-wrap justify-center gap-2">
+                <button onclick="demoChat('help')" class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs hover:bg-white/10 transition-all">💬 Conversation Help</button>
+                <button onclick="demoChat('date')" class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs hover:bg-white/10 transition-all">🎉 Date Ideas</button>
+                <button onclick="demoChat('boundary')" class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs hover:bg-white/10 transition-all">🚧 Boundaries</button>
+                <button onclick="demoChat('love')" class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs hover:bg-white/10 transition-all">❤️ Love Languages</button>
+            </div>
+
+            <!-- Input Box -->
+            <div class="relative bg-bestie-card/50 border border-white/10 rounded-2xl p-2 backdrop-blur-lg">
+                <div class="flex items-center gap-3">
+                    <input type="text" id="demoInput" placeholder="Ask Bestie anything..." class="flex-1 px-4 py-3 bg-transparent outline-none text-sm">
+                    <button id="demoSend" class="w-10 h-10 rounded-xl bg-gradient-to-r from-bestie-pink to-bestie-purple flex items-center justify-center hover:scale-105 transition-all shadow-lg shadow-bestie-pink/20">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <p class="text-center text-[10px] text-gray-500">This is a limited demo. Start a free trial for personalized deep-coaching.</p>
+        </div>
+    </main>
+
+    <!-- Load core logic -->
+    <script src="assets/js/script.js"></script>
+    <script>
+        // Custom entrance for the demo page
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.from("#demoChat", {
+                opacity: 0,
+                y: 20,
+                duration: 1,
+                ease: "power3.out"
+            });
+        });
+    </script>
+</body>
+</html>

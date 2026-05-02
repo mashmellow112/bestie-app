@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+package-lock.json
+package.json
+
+# Build Output
+dist/
+build/
+*.min.css
+*.min.js
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+# Critical: Never commit the .env file to version control
+.env
+.env.local
+.env.*.local
+
+# Backup Files
+*.bak
+*.tmp
+*.temp
+
+# Zip Archives
+*.zip
+*.rar
+
+# Exclude CDN cached files
+assets/css/*.css
+!assets/css/style.css
+assets/js/*.js
+!assets/js/script.js

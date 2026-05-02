@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bestie - Loading...</title>
+    <link rel="icon" type="image/jpeg" href="assets/img/Screenshot%202026-04-22%20235700.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF6B9D">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'outfit': ['Outfit', 'sans-serif'] },
+                    colors: {
+                        'bestie-pink': '#FF6B9D',
+                        'bestie-purple': '#C084FC',
+                        'bestie-cyan': '#22D3EE',
+                        'bestie-dark': '#0A0A0F',
+                        'bestie-card': '#12121A',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: radial-gradient(ellipse at top left, rgba(255, 107, 157, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom right, rgba(192, 132, 252, 0.15) 0%, transparent 50%),
+                        linear-gradient(135deg, #0A0A0F 0%, #12121A 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-container {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-track {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 2rem auto 0;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #FF6B9D, #C084FC, #22D3EE);
+            box-shadow: 0 0 15px rgba(192, 132, 252, 0.5);
+        }
+
+        .logo-glow {
+            filter: drop-shadow(0 0 15px rgba(255, 107, 157, 0.4));
+        }
+    </style>
+</head>
+<body class="font-outfit text-white">
+
+    <div class="glass-container text-center relative z-10" id="splash-content">
+        <!-- Logo Entrance -->
+        <div id="logo-wrapper" class="mb-6">
+            <div class="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-br from-bestie-pink to-bestie-purple flex items-center justify-center shadow-2xl logo-glow">
+                <svg class="w-14 h-14 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- App Name -->
+        <h1 class="text-4xl font-black tracking-tighter mb-2 opacity-0" id="brand-name">
+            Bestie<span class="text-bestie-cyan">.</span>
+        </h1>
+        <p class="text-gray-400 text-sm font-medium tracking-widest uppercase opacity-0" id="tagline">
+            Your Relationship Coach
+        </p>
+
+        <!-- Loading State -->
+        <div class="progress-track opacity-0" id="loader">
+            <div class="progress-bar" id="fill"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tl = gsap.timeline();
+
+            // Initial state
+            gsap.set("#logo-wrapper", { scale: 0.8, opacity: 0 });
+            
+            // 1. Logo Pop & Grow
+            tl.to("#logo-wrapper", {
+                duration: 1.2,
+                scale: 1,
+                opacity: 1,
+                ease: "elastic.out(1, 0.5)"
+            })
+            // 2. Text Fade Up
+            .to(["#brand-name", "#tagline"], {
+                duration: 0.8,
+                opacity: 1,
+                y: -10,
+                stagger: 0.2,
+                ease: "power2.out"
+            }, "-=0.4")
+            // 3. Show Loader and Fill
+            .to("#loader", { opacity: 1, duration: 0.5 })
+            .to("#fill", {
+                width: "100%",
+                duration: 2.5,
+                ease: "power1.inOut",
+                onComplete: () => {
+                    gsap.to("body", { opacity: 0, duration: 0.8, onComplete: () => {
+                        window.location.href = 'login.html';
+                    }});
+                }
+            });
+        });
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bestie Chat - Private Session</title>
+    <link rel="icon" type="image/jpeg" href="assets/img/Screenshot%202026-04-22%20235700.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF6B9D">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <!-- Font Awesome with local fallback -->
+    <link rel="preload" href="assets/css/font-awesome.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="assets/css/font-awesome.min.css" media="print" onload="this.media='all'; this.onload=null;">
+    <noscript><link rel="stylesheet" href="assets/css/font-awesome.min.css"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'; this.onload=null;">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'outfit': ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        'bestie-pink': '#FF6B9D',
+                        'bestie-purple': '#C084FC',
+                        'bestie-cyan': '#22D3EE',
+                        'bestie-dark': '#0A0A0F',
+                        'bestie-card': '#12121A',
+                    },
+                    animation: {
+                        'typing': 'typing 1.5s ease-in-out infinite',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-in': 'slideIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        typing: {
+                            '0%, 60%, 100%': { opacity: '1' },
+                            '30%': { opacity: '0' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        micPulse: {
+                            '0%, 100%': {
+                                transform: 'scale(1)',
+                                filter: 'drop-shadow(0 0 0 rgba(192, 132, 252, 0))'
+                            },
+                            '50%': { transform: 'scale(1.1)', filter: 'drop-shadow(0 0 8px rgba(192, 132, 252, 0.6))' }
+                        },
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' },
+                        }
+                    }
+                }
+            }
+        }
+
+        // Session management for private chat
+        class ChatSessionManager {
+            constructor() {
+                this.sessionId = this.getSessionId();
+                this.userId = this.getUserId();
+                this.isAuthenticated = this.checkAuthentication();
+                this.clearChatHistory();
+                this.chatHistory = [];
+                this.currentPlan = this.getCurrentPlan();
+            }
+
+            getSessionId() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const sessionId = urlParams.get('session') || localStorage.getItem('bestie_session_id');
+
+                if (!sessionId) {
+                    const newSessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('bestie_session_id', newSessionId);
+                    return newSessionId;
+                }
+
+                return sessionId;
+            }
+
+            getUserId() {
+                let id = localStorage.getItem('bestie_user_id');
+                if (!id) {
+                    id = 'user_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('bestie_user_id', id);
+                }
+                return id;
+            }
+
+            checkAuthentication() {
+                // Helpful local-dev hint
+                if (window.location.port !== '3000' && window.location.hostname === 'localhost') {
+                    console.info('Running on port ' + window.location.port + '. Chat will try multiple API endpoints automatically.');
+                }
+
+                // Check for payment completion and valid session
+                const paymentCompleted = localStorage.getItem('bestie_payment_completed') === 'true';
+                const sessionValid = this.validateSession();
+
+                return paymentCompleted && sessionValid;
+            }
+
+            validateSession() {
+                // In a real app, this would validate against a backend
+                const sessionExpiry = localStorage.getItem('bestie_session_expiry');
+                if (!sessionExpiry) return false;
+
+                return Date.now() < parseInt(sessionExpiry);
+            }
+
+            loadChatHistory() {
+                try {
+                    const history = localStorage.getItem(`bestie_chat_${this.userId}`);
+                    return history ? JSON.parse(history) : [];
+                } catch (e) {
+                    console.error('Failed to load chat history:', e);
+                    return [];
+                }
+            }
+
+            clearChatHistory() {
+                try {
+                    localStorage.removeItem(`bestie_chat_${this.userId}`);
+                } catch (e) {
+                    console.error('Failed to clear chat history:', e);
+                }
+            }
+
+            saveChatHistory(messages) {
+                try {
+                    localStorage.setItem(`bestie_chat_${this.userId}`, JSON.stringify(messages));
+                } catch (e) {
+                    console.error('Failed to save chat history:', e);
+                }
+            }
+
+            getCurrentPlan() {
+                return localStorage.getItem('bestie_plan') || 'weekly';
+            }
+
+            extendSession() {
+                // Extend session by 7 days for weekly plan
+                const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
+                localStorage.setItem('bestie_session_expiry', expiryTime.toString());
+            }
+
+            logout() {
+                localStorage.removeItem('bestie_payment_completed');
+                localStorage.removeItem('bestie_session_expiry');
+                localStorage.removeItem('bestie_user_id');
+                localStorage.removeItem('bestie_session_id');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Initialize session manager
+        const sessionManager = new ChatSessionManager();
+
+        // Load API configuration for demo responses
+        fetch('api-config.json')
+            .then(response => response.json())
+            .then(config => {
+                localStorage.setItem('bestie_api_config', JSON.stringify(config));
+            })
+            .catch(error => {
+                console.log('API config not found, using default responses');
+            });
+    </script>
+    <style>
+        body {
+            background: radial-gradient(ellipse at top left, rgba(255, 107, 157, 0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at bottom right, rgba(192, 132, 252, 0.12) 0%, transparent 50%),
+                        radial-gradient(ellipse at center, rgba(34, 211, 238, 0.08) 0%, transparent 60%),
+                        linear-gradient(135deg, #0A0A0F 0%, #12121A 100%);
+        }
+
+        .chat-container {
+            background: rgba(18, 18, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .message {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message.user {
+            /* Styled in renderMessage with gradient */
+        }
+
+        .message.ai {
+            /* Styled in renderMessage with white/10bg */
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 6px;
+            padding: 12px 16px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.4);
+            animation: typing 1.5s ease-in-out infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        .chat-input {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 28px;
+            padding: 18px 24px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #C084FC;
+            box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15);
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #FF6B9D 0%, #C084FC 100%);
+            border: none;
+            border-radius: 50%;
+            width: 52px;
+            height: 52px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(255, 107, 157, 0.4);
+        }
+
+        .send-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 107, 157, 0.4);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .bubble {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .message.user .bubble {
+            border-radius: 0 8px 8px 8px;
+        }
+
+        .message.ai .bubble {
+            border-radius: 8px 0 8px 8px;
+        }
+
+        .plan-badge {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .session-info {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .scrollbar-thin {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 107, 157, 0.6) rgba(18, 18, 26, 0.3);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: rgba(18, 18, 26, 0.3);
+            border-radius: 4px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(255, 107, 157, 0.6) 0%, rgba(192, 132, 252, 0.6) 100%);
+            border-radius: 4px;
+            border: 1px solid rgba(18, 18, 26, 0.5);
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: rgba(192, 132, 252, 0.7);
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        /* Ensure scrollbar is always visible */
+        .scrollbar-thin {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 107, 157, 0.6) rgba(18, 18, 26, 0.3);
+        }
+
+        /* Force scrollbar visibility on WebKit browsers */
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 8px;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Ensure chat interface takes full available height */
+        #chat-interface {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* WhatsApp-style message bubbles */
+        .message.ai .bubble-container {
+            position: relative;
+        }
+
+        .message.ai .bubble-container::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 12px;
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 8px solid #f0f0f0;
+        }
+
+        .message.user .bubble-container {
+            position: relative;
+        }
+
+        .message.user .bubble-container::before {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 12px;
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 8px solid rgba(192, 83, 141, 0.4);
+        }
+
+        /* Make sure the main content area flexes properly */
+        #chat-interface main {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Messages container should scroll */
+        #messages-container {
+            flex: 1;
+            min-height: 0;
+            max-height: calc(100vh - 200px); /* Account for header and input */
+        }
+
+        .pulse-ring {
+            animation: pulseRing 2s infinite;
+        }
+
+        @keyframes pulseRing {
+            0% {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+            animation: slideIn 0.5s ease-out;
+            z-index: 1000;
+        }
+
+        .auth-error {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .auth-error-content {
+            background: rgba(18, 18, 26, 0.95);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            max-width: 400px;
+            margin: 20px;
+        }
+
+        .auth-error-content h2 {
+            color: #EF4444;
+            margin-bottom: 16px;
+        }
+
+        .auth-error-content p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body class="bg-bestie-dark text-white font-outfit overflow-hidden min-h-screen relative">
+
+    <!-- Authentication Check -->
+    <div id="auth-error" class="auth-error hidden">
+        <div class="auth-error-content">
+            <div class="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold">Access Denied</h2>
+            <p class="text-lg">You need to complete payment to access the private AI chat. Redirecting you to the payment page...</p>
+            <div class="mt-6">
+                <div class="w-full bg-gray-700 rounded-full h-2">
+                    <div class="bg-red-500 h-2 rounded-full animate-pulse" id="redirect-progress" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-bestie-dark flex items-center justify-content-center z-50 hidden">
+        <div class="text-center">
+            <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-bestie-pink to-bestie-purple flex items-center justify-center">
+                <div class="pulse-ring absolute inset-0 rounded-full bg-bestie-pink opacity-30"></div>
+                <div class="pulse-ring absolute inset-0 rounded-full bg-bestie-purple opacity-20" style="animation-delay: 0.5s"></div>
+                <img src="assets/img/pic.jpg" alt="Bestie" class="w-full h-full rounded-full object-cover relative z-10 border-2 border-white/20">
+            </div>
+            <h2 class="text-2xl font-bold mb-4">Initializing Your Assistant</h2>
+            <p class="text-gray-400">Setting up your private chat session...</p>
+        </div>
+    </div>
+
+    <!-- Main Chat Interface -->
+    <div id="chat-interface" class="hidden min-h-screen flex flex-col">
+
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-bestie-dark/90 backdrop-blur-xl border-b border-white/10 px-6 py-4 shadow-lg">
+            <div class="max-w-6xl mx-auto flex items-center justify-between">
+                <!-- Logo and Title -->
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <img src="assets/img/pic.jpg" alt="Bestie" class="w-10 h-10 rounded-full object-cover shadow-lg border border-white/10">
+                        <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">Bestie </h1>
+                        <div class="flex items-center gap-2 text-sm text-gray-400">
+                            <span>Online</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Info and Actions -->
+                <div class="flex items-center gap-2"><button id="history-btn" type="button" class="px-3 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-sm text-white transition-all">Bestie History</button><button id="clear-history-btn" type="button" class="px-3 py-2 rounded-xl border border-red-300/30 bg-red-500/10 hover:bg-red-500/20 text-sm text-red-200 transition-all">Clear History</button></div>
+            </div>
+        </header>
+
+        <!-- Chat Messages Area -->
+        <main class="flex-1 overflow-hidden min-h-0">
+            <div class="max-w-4xl mx-auto h-full flex flex-col">
+                <!-- Messages Container -->
+                <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin min-h-0">
+                    <!-- Welcome Message -->
+                    <div class="message ai animate-fade-in">
+                        <div class="flex justify-start mb-2">
+                            <div class="bubble-container">
+                                <div class="bubble bg-[#f0f0f0] p-4 max-w-2xl shadow-sm" style="box-shadow: 0 1px 0.5px rgba(0,0,0,0.13), 0 1px 2px rgba(0,0,0,0.25); border-radius: 0 12px 12px 12px;">
+                                    <div class="text-xs text-[#888] mb-2">Bestie • Just now</div>
+                                    <div class="text-[#111] text-[15px] leading-relaxed">
+                                        <p class="mb-3">👋 Hi there! I'm Bestie, your personal relationship coach. I'm here to help you navigate love and growth.</p>
+                                        <p class="mb-3">Your session is now active and all our conversations are private and secure. What would you like to talk about today?</p>
+                                        <div class="flex flex-wrap gap-2 mt-3">
+                                            <button onclick="sendQuickMessage('How do I know if someone is interested in me?')" class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs transition-colors">
+                                                💕 Dating Advice
+                                            </button>
+                                            <button onclick="sendQuickMessage('How can I communicate better with my partner?')" class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs transition-colors">
+                                                🗣️ Communication
+                                            </button>
+                                            <button onclick="sendQuickMessage('What are some good date ideas?')" class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs transition-colors">
+                                                🎉 Date Ideas
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Scroll to Bottom Button -->
+                <button id="scroll-to-bottom" class="fixed bottom-24 right-6 w-12 h-12 bg-gradient-to-r from-bestie-pink to-bestie-purple rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:scale-110 z-40" onclick="scrollToBottom()">
+                    <i class="fas fa-chevron-down text-white"></i>
+                </button>
+
+                <!-- Typing Indicator -->
+                <div id="typing-indicator" class="hidden px-4 pb-4">
+                    <div class="flex justify-start">
+                        <div class="bubble-container">
+                            <div class="bubble bg-[#f0f0f0] p-3.5 shadow-sm" style="box-shadow: 0 1px 0.5px rgba(0,0,0,0.13), 0 1px 2px rgba(0,0,0,0.25); border-radius: 0 12px 12px 12px;">
+                                <div class="typing-indicator">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- WhatsApp-Style Premium Input Area -->
+                <div class="border-t border-white/10 p-4 md:p-6 bg-bestie-dark/60 backdrop-blur-2xl">
+                    <div class="max-w-4xl mx-auto">
+                        <form id="chat-form" class="flex items-center gap-3">
+                            <!-- Upload Button (+) -->
+                            <button type="button" id="upload-btn" class="w-12 h-12 flex-shrink-0 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-bestie-cyan hover:border-bestie-cyan/40 hover:bg-bestie-cyan/10 transition-all duration-300 shadow-sm" title="Upload Files or Pictures">
+                                <i class="fas fa-plus text-lg"></i>
+                            </button>
+
+                            <!-- Message Input Wrapper -->
+                            <div class="flex-1 relative group flex items-center bg-white/5 border border-white/10 rounded-[2rem] px-2 transition-all duration-300 focus-within:border-bestie-purple/50 focus-within:bg-white/10 focus-within:shadow-[0_0_20px_rgba(192,132,252,0.1)]">
+                                <input
+                                    type="text"
+                                    id="message-input"
+                                    class="w-full bg-transparent border-none py-3.5 px-4 text-white placeholder-gray-500 outline-none transition-all duration-300"
+                                    placeholder="Type a message..."
+                                    maxlength="500"
+                                    autocomplete="off"
+                                >
+                                <!-- Microphone Icon -->
+                                <button type="button" id="voice-btn" class="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-bestie-purple transition-all duration-300 rounded-full hover:bg-white/5 focus:outline-none" title="Voice Input">
+                                    <i class="fas fa-microphone text-lg"></i>
+                                </button>
+                            </div>
+
+                            <!-- Send Button -->
+                            <button type="submit" id="send-btn" class="w-12 h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-bestie-pink via-bestie-purple to-bestie-pink bg-[length:200%_200%] flex items-center justify-center text-white shadow-lg shadow-bestie-pink/20 hover:scale-110 active:scale-90 disabled:opacity-50 disabled:grayscale transition-all duration-300" disabled>
+                                <i class="fas fa-paper-plane text-lg ml-0.5"></i>
+                            </button>
+                        </form>
+
+                        <!-- Character Count and Quick Actions -->
+                        <div class="flex justify-between items-center mt-3 px-2">
+                            <div class="flex gap-4 text-[10px] md:text-xs text-gray-500 uppercase tracking-widest font-bold">
+                                <button onclick="sendQuickMessage('relationship advice')" class="hover:text-bestie-cyan transition-colors">Advice</button>
+                                <button onclick="sendQuickMessage('communication tips')" class="hover:text-bestie-purple transition-colors">Tips</button>
+                                <button onclick="sendQuickMessage('date ideas')" class="hover:text-bestie-pink transition-colors">Dates</button>
+                            </div>
+                            <div class="text-[10px] md:text-xs text-gray-500 font-mono" id="char-count">0/500</div>
+                        </div>
+
+                        <!-- Hidden file input -->
+                        <input type="file" id="file-input" class="hidden" accept="image/*,audio/*,video/*,application/*" multiple>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <!-- History Modal -->
+    <div id="history-modal" class="hidden fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm p-4">
+        <div class="max-w-2xl mx-auto mt-14 bg-bestie-card border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                <h3 class="text-lg font-bold">Bestie History</h3>
+                <button id="history-close-btn" type="button" class="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <div id="history-content" class="max-h-[65vh] overflow-y-auto p-4 space-y-3 text-sm text-gray-200"></div>
+        </div>
+    </div>
+    <!-- Notification System -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script src="assets/js/script.js"></script>
+    <script>
+        // Chat Application Class
+        class AIChatApp {
+            constructor() {
+                this.messages = [];
+                this.isTyping = false;
+                this.isSending = false;
+                this.sessionStartTime = Date.now();
+                this.recognition = null;
+                this.isListening = false;
+                this.init();
+            }
+
+            init() {
+                // Check authentication
+                if (!sessionManager.isAuthenticated) {
+                    this.showAuthError();
+                    return;
+                }
+
+                // Extend session
+                sessionManager.extendSession();
+
+                // Load existing messages
+                this.loadMessages();
+
+                // Setup event listeners
+                this.setupEventListeners();
+
+                // Init file upload
+                this.initFileUpload();
+
+                // Show interface
+                this.showChatInterface();
+            }
+
+            showAuthError() {
+                const authError = document.getElementById('auth-error');
+                authError.classList.remove('hidden');
+
+                // Auto redirect progress
+                let progress = 0;
+                const progressBar = document.getElementById('redirect-progress');
+                const interval = setInterval(() => {
+                    progress += 2;
+                    progressBar.style.width = progress + '%';
+
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        window.location.href = 'payment.html';
+                    }
+                }, 50);
+            }
+
+            showChatInterface() {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('chat-interface').classList.remove('hidden');
+            }
+            escapeHtml(text) {
+                return String(text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            getAiTheme() {
+                const themeName = (localStorage.getItem('bestie_ai_theme') || 'pink').toLowerCase();
+                const themes = {
+                    pink: {
+                        titleGradient: 'from-bestie-pink to-bestie-purple',
+                        pointsBorder: 'border-[#fbcfe8]',
+                        pointsBg: 'bg-[#fff1f7]',
+                        pointsText: 'text-[#be185d]',
+                        actionBorder: 'border-[#f5d0fe]',
+                        actionBg: 'bg-[#fdf4ff]',
+                        actionText: 'text-[#a21caf]'
+                    },
+                    purple: {
+                        titleGradient: 'from-[#7c3aed] to-[#4f46e5]',
+                        pointsBorder: 'border-[#ddd6fe]',
+                        pointsBg: 'bg-[#f5f3ff]',
+                        pointsText: 'text-[#6d28d9]',
+                        actionBorder: 'border-[#c7d2fe]',
+                        actionBg: 'bg-[#eef2ff]',
+                        actionText: 'text-[#4338ca]'
+                    },
+                    cyan: {
+                        titleGradient: 'from-[#0891b2] to-[#2563eb]',
+                        pointsBorder: 'border-[#bae6fd]',
+                        pointsBg: 'bg-[#ecfeff]',
+                        pointsText: 'text-[#0e7490]',
+                        actionBorder: 'border-[#bfdbfe]',
+                        actionBg: 'bg-[#eff6ff]',
+                        actionText: 'text-[#1d4ed8]'
+                    }
+                };
+                return themes[themeName] || themes.pink;
+            }
+
+            formatAiMessage(content) {
+                const safe = this.escapeHtml(content || '');
+                const cleaned = safe.replace(/^\s*(hey\s+bestie[!,.:\s\uD83C-\uDBFF\uDC00-\uDFFF]*)/i, '').trim();
+                const normalized = cleaned.replace(/(\b\d{1,2})\s*,\s*(?=\d{1,2}\b)/g, '$1\n');
+                const lines = normalized.split('\n').map(l => l.trim()).filter(Boolean).filter(l => l !== '---');
+                const theme = this.getAiTheme();
+
+                const applyInline = (text) => text
+                    .replace(/\*\*/g, '')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+                if (!lines.length) {
+                    return '<p class="mb-1">I am here for you. Tell me a little more.</p>';
+                }
+
+                let title = '';
+                const bullets = [];
+                const paragraphs = [];
+                let action = '';
+
+                for (let i = 0; i < lines.length; i++) {
+                    let line = lines[i];
+
+                    // Remove markdown heading markers.
+                    line = line.replace(/^#{1,3}\s+/, '');
+
+                    // First meaningful line becomes title.
+                    if (!title) {
+                        title = applyInline(line);
+                        continue;
+                    }
+
+                    // Pull explicit action callouts.
+                    if (/^(next step|action|try this|your move)\s*[:\-]/i.test(line)) {
+                        action = applyInline(line.replace(/^(next step|action|try this|your move)\s*[:\-]\s*/i, ''));
+                        continue;
+                    }
+
+                    if (/^[-�]\s+/.test(line)) {
+                        bullets.push(applyInline(line.replace(/^[-�]\s+/, '')));
+                        continue;
+                    }
+
+                    if (/^\d+\.\s+/.test(line)) {
+                        bullets.push(applyInline(line.replace(/^\d+\.\s+/, '')));
+                        continue;
+                    }
+
+                    paragraphs.push(applyInline(line));
+                }
+
+                // Smart fallback: use last paragraph as action if no explicit action exists.
+                if (!action && paragraphs.length > 1) {
+                    action = paragraphs.pop();
+                }
+
+                const intro = paragraphs.length
+                    ? `<div class="text-[14px] leading-relaxed text-[#1f2937]">${paragraphs.map(p => `<p class=\"mb-2\">${p}</p>`).join('')}</div>`
+                    : '';
+
+                const bulletSection = bullets.length
+                    ? `
+                    <div class="rounded-xl border ${theme.pointsBorder} ${theme.pointsBg} p-3 mt-2">
+                        <div class="text-[12px] font-bold uppercase tracking-wide ${theme.pointsText} mb-2">Key Points</div>
+                        <ul class="list-disc pl-5 space-y-1 text-[14px] text-[#111827]">
+                            ${bullets.map(b => `<li>${b}</li>`).join('')}
+                        </ul>
+                    </div>`
+                    : '';
+
+                const actionSection = action
+                    ? `
+                    <div class="rounded-xl border ${theme.actionBorder} ${theme.actionBg} p-3 mt-3">
+                        <div class="text-[12px] font-bold uppercase tracking-wide ${theme.actionText} mb-1">Next Step</div>
+                        <p class="text-[14px] text-[#111827] leading-relaxed">${action}</p>
+                    </div>`
+                    : '';
+
+                return `
+                    <div class="rounded-2xl border border-[#e5e7eb] bg-white p-3.5 shadow-sm">
+                        <div class="rounded-xl bg-gradient-to-r ${theme.titleGradient} px-3 py-2 mb-3">
+                            <h4 class="text-[15px] font-extrabold text-white leading-snug">${title}</h4>
+                        </div>
+                        ${intro}
+                        ${bulletSection}
+                        ${actionSection}
+                    </div>
+                `;
+            }
+            renderMessage(message) {
+                const container = document.getElementById('messages-container');
+                if (!container) return;
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${message.type} animate-fade-in`;
+
+                if (message.type === 'user') {
+                    messageDiv.innerHTML = `
+                        <div class="flex justify-end mb-4 group" id="msg-${message.id}">
+                            <div class="flex flex-col items-end">
+                                <div class="bubble-container">
+                                    <div class="bubble bg-gradient-to-r from-bestie-pink via-bestie-purple to-bestie-pink bg-[length:200%_200%] p-3.5 max-w-md lg:max-w-2xl shadow-md" style="box-shadow: 0 1px 0.5px rgba(0,0,0,0.13), 0 1px 2px rgba(0,0,0,0.25);">
+                                        <div class="text-xs text-white/60 mb-1 text-right">You • ${new Date(message.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
+                                        <div class="text-white text-[15px] leading-relaxed" id="text-${message.id}">
+                                            ${this.escapeHtml(message.content)}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-3 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="chatApp.copyToClipboard('${message.id}')" class="text-[10px] text-gray-500 hover:text-bestie-cyan flex items-center gap-1 transition-colors">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                    <button onclick="chatApp.startEdit('${message.id}')" class="text-[10px] text-gray-500 hover:text-bestie-purple flex items-center gap-1 transition-colors">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="flex justify-start mb-2">
+                            <div class="bubble-container">
+                                <div class="bubble bg-[#f0f0f0] text-[#111] p-3.5 max-w-md lg:max-w-2xl shadow-sm" style="box-shadow: 0 1px 0.5px rgba(0,0,0,0.13), 0 1px 2px rgba(0,0,0,0.25); border-radius: 0 12px 12px 12px;">
+                                    <div class="text-xs text-[#888] mb-1">Bestie • ${new Date(message.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
+                                    <div class="text-[#111] text-[15px] leading-relaxed">
+                                        ${this.formatAiMessage(String(message.content || '').replace(/\*\*/g, ''))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                container.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            sendMessage() {
+                const input = document.getElementById('message-input');
+                const message = input.value.trim();
+                if (!message || message.length > 500 || this.isSending) return;
+
+                const userMessage = {
+                    id: Date.now(),
+                    type: 'user',
+                    content: message,
+                    timestamp: new Date().toISOString()
+                };
+                this.messages.push(userMessage);
+                this.renderMessage(userMessage);
+                this.saveMessages();
+                input.value = '';
+                this.updateCharCount();
+                this.updateSendButton();
+
+                this.isSending = true;
+                this.showTyping();
+
+                const payload = { userId: sessionManager.userId, message: message };
+                const apiCandidates = this.getApiCandidates();
+
+                this.tryApiCandidates(apiCandidates, payload)
+                .then(data => {
+                    this.hideTyping();
+                    if (data.reply) {
+                        const aiMessage = {
+                            id: Date.now() + 1,
+                            type: 'ai',
+                            content: data.reply,
+                            timestamp: new Date().toISOString()
+                        };
+                        this.messages.push(aiMessage);
+                        this.renderMessage(aiMessage);
+                        this.saveMessages();
+                    }
+                })
+                .catch(err => {
+                    this.hideTyping();
+                    const rateLimited = err && (err.status === 429 || String(err.message || '').includes('429'));
+                    const fallbackReply = this.generateResponse(message);
+                    const aiMessage = {
+                        id: Date.now() + 1,
+                        type: 'ai',
+                        content: fallbackReply,
+                        timestamp: new Date().toISOString()
+                    };
+                    this.messages.push(aiMessage);
+                    this.renderMessage(aiMessage);
+                    this.saveMessages();
+                    this.showNotification(
+                        rateLimited
+                            ? 'Rate limit reached. Please wait a few seconds. Using built-in coach mode for now.'
+                            : 'Live API is offline. Using built-in coach mode.'
+                    );
+                    console.error('Bestie Connection Error:', err);
+                })
+                .finally(() => {
+                    this.isSending = false;
+                });
+            }
+
+            getApiCandidates() {
+                const candidates = new Set();
+                candidates.add('/api/chat');
+                candidates.add(`${window.location.origin}/api/chat`);
+
+                try {
+                    const raw = localStorage.getItem('bestie_api_config');
+                    if (raw) {
+                        const cfg = JSON.parse(raw);
+                        if (cfg?.api?.endpoints?.chat) {
+                            const configured = cfg.api.endpoints.chat;
+                            if (/^https?:\/\//i.test(configured)) {
+                                candidates.add(configured);
+                            } else {
+                                candidates.add(configured);
+                                candidates.add(`${window.location.origin}${configured.startsWith('/') ? '' : '/'}${configured}`);
+                            }
+                        }
+                        if (cfg?.api?.baseUrl && /^https?:\/\//i.test(cfg.api.baseUrl)) {
+                            candidates.add(`${cfg.api.baseUrl.replace(/\/$/, '')}/chat`);
+                        }
+                    }
+                } catch (_) {}
+                return Array.from(candidates);
+            }
+
+            tryApiCandidates(apiCandidates, payload) {
+                let index = 0;
+                let lastError = null;
+                const attempt = () => {
+                    if (index >= apiCandidates.length) {
+                        throw lastError || new Error('All API endpoints failed');
+                    }
+
+                    const apiUrl = apiCandidates[index++];
+                    return fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(async res => {
+                        const contentType = res.headers.get('content-type');
+                        const isJson = contentType && contentType.includes('application/json');
+                        const data = isJson ? await res.json() : await res.text();
+
+                        if (!res.ok) {
+                            const error = new Error(typeof data === 'object' ? (data.error || JSON.stringify(data)) : (data || `Server error: ${res.status}`));
+                            error.status = res.status;
+                            throw error;
+                        }
+                        return data;
+                    })
+                    .catch(err => {
+                        lastError = err;
+                        if (err && err.status === 429) {
+                            throw err;
+                        }
+                        return attempt();
+                    });
+                };
+
+                return attempt();
+            }
+            generateResponse(userMessage) {
+                const responses = [
+                    `I understand you're dealing with "${userMessage}". That's a common challenge in relationships. Let me help you navigate this.`,
+                    `Thanks for sharing that. When it comes to "${userMessage}", it's important to consider both perspectives. Here's my advice:`,
+                    `That's an interesting point about "${userMessage}". In my experience helping others with relationships, I've found that communication is key.`,
+                    `I hear you on "${userMessage}". Let's break this down and find some practical solutions together.`
+                ];
+                return responses[Math.floor(Math.random() * responses.length)] + ` What specific aspects of this situation would you like to explore further?`;
+            }
+
+            showTyping() {
+                document.getElementById('typing-indicator').classList.remove('hidden');
+                this.scrollToBottom();
+            }
+
+            hideTyping() {
+                document.getElementById('typing-indicator').classList.add('hidden');
+            }
+
+            updateCharCount() {
+                const input = document.getElementById('message-input');
+                const count = document.getElementById('char-count');
+                count.textContent = `${input.value.length}/500`;
+            }
+
+            updateSendButton() {
+                const input = document.getElementById('message-input');
+                const button = document.getElementById('send-btn');
+                button.disabled = !input.value.trim();
+            }
+
+            saveMessages() {
+                sessionManager.saveChatHistory(this.messages);
+            }
+
+            scrollToBottom() {
+                const container = document.getElementById('messages-container');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            }
+
+            showNotification(message) {
+                const container = document.getElementById('notification-container');
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = message;
+                container.appendChild(notification);
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+
+            toggleVoiceInput() {
+                if (!this.recognition) {
+                    this.initVoiceRecognition();
+                }
+
+                if (this.isListening) {
+                    this.stopVoiceRecognition();
+                } else {
+                    this.startVoiceRecognition();
+                }
+            }
+
+            initVoiceRecognition() {
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    this.showNotification('Voice recognition not supported in this browser');
+                    return;
+                }
+
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                this.recognition = new SpeechRecognition();
+                this.recognition.continuous = false;
+                this.recognition.interimResults = false;
+                this.recognition.lang = 'en-US';
+
+                this.recognition.onstart = () => {
+                    this.isListening = true;
+                    this.updateVoiceButton();
+                    this.showNotification('Listening... Speak your message');
+                };
+
+                this.recognition.onend = () => {
+                    this.isListening = false;
+                    this.updateVoiceButton();
+                };
+
+                this.recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('message-input').value = transcript;
+                    this.updateCharCount();
+                    this.updateSendButton();
+                    this.showNotification('Voice input captured');
+                };
+
+                this.recognition.onerror = (event) => {
+                    if (event.error === 'no-speech') {
+                        this.showNotification('No speech detected. Please try again.');
+                    } else if (event.error === 'not-allowed') {
+                        this.showNotification('Microphone access denied. Please check permissions.');
+                    } else if (event.error === 'network') {
+                        this.showNotification('Network error. Speech recognition requires internet.');
+                    } else {
+                        this.showNotification('Voice recognition error: ' + event.error);
+                    }
+                    this.stopVoiceRecognition();
+                };
+            }
+
+            startVoiceRecognition() {
+                try {
+                    this.recognition.start();
+                } catch (error) {
+                    this.showNotification('Failed to start voice recognition');
+                }
+            }
+
+            stopVoiceRecognition() {
+                if (this.recognition && this.isListening) {
+                    this.recognition.stop();
+                }
+            }
+
+            updateVoiceButton() {
+                const button = document.getElementById('voice-btn');
+                const icon = button.querySelector('i');
+
+                if (this.isListening) {
+                    button.classList.add('text-bestie-purple', 'animate-micPulse');
+                    button.classList.remove('text-gray-400', 'hover:text-bestie-purple'); // Remove hover to ensure pulse color
+                    icon.className = 'fas fa-microphone'; // Keep microphone icon, but indicate listening with pulse
+                } else {
+                    button.classList.remove('text-bestie-purple', 'animate-micPulse');
+                    button.classList.add('text-gray-400');
+                    icon.className = 'fas fa-microphone';
+                }
+            }
+
+            triggerFileUpload() {
+                document.getElementById('file-input').click();
+            }
+
+            initFileUpload() {
+                const fileInput = document.getElementById('file-input');
+                fileInput.addEventListener('change', (e) => {
+                    const files = e.target.files;
+                    if (files.length > 0) {
+                        this.handleFileUpload(files);
+                    }
+                });
+            }
+
+            handleFileUpload(files) {
+                Array.from(files).forEach(file => {
+                    // Simulate file processing
+                    const fileMessage = `Uploaded file: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                    this.addFileMessage(fileMessage, file);
+                });
+                this.showNotification(`Uploaded ${files.length} file(s)`);
+            }
+
+            addFileMessage(message, file) {
+                const userMessage = {
+                    id: Date.now(),
+                    type: 'user',
+                    content: message,
+                    timestamp: new Date().toISOString(),
+                    file: file
+                };
+                this.messages.push(userMessage);
+                this.renderMessage(userMessage);
+                this.saveMessages();
+
+                // Simulate AI response about the file
+                setTimeout(() => {
+                    const aiResponse = `I received your file "${file.name}". How would you like me to help you with this ${file.type.split('/')[0]} file?`;
+                    const aiMessage = {
+                        id: Date.now() + 1,
+                        type: 'ai',
+                        content: aiResponse,
+                        timestamp: new Date().toISOString()
+                    };
+                    this.messages.push(aiMessage);
+                    this.renderMessage(aiMessage);
+                    this.saveMessages();
+                }, 1000);
+            }
+
+            buildWelcomeMessageHtml() {
+                return `
+                    <div class="message ai animate-fade-in">
+                        <div class="flex justify-start mb-2">
+                            <div class="bubble-container">
+                                <div class="bubble bg-[#f0f0f0] p-4 max-w-2xl shadow-sm" style="box-shadow: 0 1px 0.5px rgba(0,0,0,0.13), 0 1px 2px rgba(0,0,0,0.25); border-radius: 0 12px 12px 12px;">
+                                    <div class="text-xs text-[#888] mb-2">Bestie • Just now</div>
+                                    <div class="text-[#111] text-[15px] leading-relaxed">
+                                        <p class="mb-3">👋 Hi there! I'm Bestie, your personal relationship coach. I'm here to help you navigate love and growth.</p>
+                                        <p class="mb-3">Your session is now active and all our conversations are private and secure. What would you like to talk about today?</p>
+                                        <div class="flex flex-wrap gap-2 mt-3">
+                                            <button onclick="sendQuickMessage('How do I know if someone is interested in me?')" class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs transition-colors">💕 Dating Advice</button>
+                                            <button onclick="sendQuickMessage('How can I communicate better with my partner?')" class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs transition-colors">🗣️ Communication</button>
+                                            <button onclick="sendQuickMessage('What are some good date ideas?')" class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-full text-xs transition-colors">🎉 Date Ideas</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            initializeFreshChat() {
+                const container = document.getElementById('messages-container');
+                if (!container) return;
+                this.messages = [];
+                this.saveMessages();
+                container.innerHTML = this.buildWelcomeMessageHtml();
+                this.scrollToBottom();
+            }
+
+            loadMessages() {
+                this.initializeFreshChat();
+            }
+
+            async openHistoryModal() {
+                const modal = document.getElementById('history-modal');
+                const content = document.getElementById('history-content');
+                if (!modal || !content) return;
+
+                modal.classList.remove('hidden');
+                content.innerHTML = '<div class="text-gray-400">Loading history...</div>';
+
+                try {
+                    const res = await fetch(`/api/history?userId=${encodeURIComponent(sessionManager.userId)}`);
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data?.error || 'Failed to load history');
+                    }
+
+                    const messages = Array.isArray(data.messages) ? data.messages : [];
+                    if (!messages.length) {
+                        content.innerHTML = '<div class="text-gray-400">No history found yet.</div>';
+                        return;
+                    }
+
+                    content.innerHTML = messages.map((m) => {
+                        const who = m.role === 'user' ? 'You' : 'Bestie';
+                        const color = m.role === 'user' ? 'text-bestie-cyan' : 'text-bestie-pink';
+                        const at = m.created_at ? new Date(m.created_at).toLocaleString() : 'Just now';
+                        const text = this.escapeHtml(m.content || '');
+                        return `
+                            <div class="rounded-xl border border-white/10 bg-white/5 p-3">
+                                <div class="text-xs ${color} mb-1">${who} • ${at}</div>
+                                <div class="text-sm text-gray-100 leading-relaxed whitespace-pre-wrap">${text}</div>
+                            </div>
+                        `;
+                    }).join('');
+                } catch (error) {
+                    content.innerHTML = `<div class="text-red-300">${this.escapeHtml(error.message || 'Failed to load history')}</div>`;
+                }
+            }
+
+            closeHistoryModal() {
+                const modal = document.getElementById('history-modal');
+                if (modal) modal.classList.add('hidden');
+            }
+
+            setupEventListeners() {
+                // Chat form submission
+                document.getElementById('chat-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.sendMessage();
+                });
+
+                // Message input handling
+                const messageInput = document.getElementById('message-input');
+                messageInput.addEventListener('input', (e) => {
+                    this.updateCharCount();
+                    this.updateSendButton();
+                });
+
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                // Voice button
+                document.getElementById('voice-btn').addEventListener('click', () => {
+                    this.toggleVoiceInput();
+                });
+
+                                // Upload button
+                document.getElementById('upload-btn').addEventListener('click', () => {
+                    this.triggerFileUpload();
+                });
+
+                // Bestie History modal controls
+                const historyBtn = document.getElementById('history-btn');
+                const historyCloseBtn = document.getElementById('history-close-btn');
+                const historyModal = document.getElementById('history-modal');
+                if (historyBtn) historyBtn.addEventListener('click', () => this.openHistoryModal());
+                if (historyCloseBtn) historyCloseBtn.addEventListener('click', () => this.closeHistoryModal());
+                if (historyModal) historyModal.addEventListener('click', (e) => { if (e.target === historyModal) this.closeHistoryModal(); });
+
+                // Setup scroll behavior
+                this.setupScrollBehavior();
+
+                // Add keyboard shortcuts
+                this.setupKeyboardShortcuts();
+            }
+
+            setupScrollBehavior() {
+                const container = document.getElementById('messages-container');
+                const scrollBtn = document.getElementById('scroll-to-bottom');
+
+                if (!container || !scrollBtn) return;
+
+                container.addEventListener('scroll', () => {
+                    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+                    if (isNearBottom) {
+                        scrollBtn.classList.add('opacity-0', 'invisible');
+                    } else {
+                        scrollBtn.classList.remove('opacity-0', 'invisible');
+                    }
+                });
+            }
+
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    // Ctrl/Cmd + K to clear chat
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                        e.preventDefault();
+                        clearChat();
+                        this.showNotification('Chat cleared (Ctrl+K)');
+                    }
+
+                    // Ctrl/Cmd + E to export chat
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                        e.preventDefault();
+                        exportChat();
+                        this.showNotification('Chat exported (Ctrl+E)');
+                    }
+
+                    // Page Down to scroll to bottom
+                    if (e.key === 'PageDown' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.scrollToBottom();
+                    }
+                });
+            }
+
+            startEdit(id) {
+                const message = this.messages.find(m => m.id == id);
+                if (!message) return;
+
+                const textContainer = document.getElementById(`text-${id}`);
+                if (!textContainer) return;
+
+                const originalContent = message.content;
+                textContainer.innerHTML = `
+                    <textarea class="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white text-sm outline-none focus:border-white/30 resize-none mb-2" rows="3">${originalContent}</textarea>
+                    <div class="flex justify-end gap-2">
+                        <button onclick="chatApp.cancelEdit('${id}')" class="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] hover:bg-white/10 transition-all">Cancel</button>
+                        <button onclick="chatApp.saveEdit('${id}')" class="px-3 py-1.5 bg-bestie-cyan/20 border border-bestie-cyan/30 rounded-lg text-[10px] text-bestie-cyan hover:bg-bestie-cyan/40 transition-all">Update</button>
+                    </div>
+                `;
+                const textarea = textContainer.querySelector('textarea');
+                textarea.focus();
+                textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            }
+
+            cancelEdit(id) {
+                const message = this.messages.find(m => m.id == id);
+                if (!message) return;
+                const textContainer = document.getElementById(`text-${id}`);
+                if (textContainer) {
+                    textContainer.innerHTML = `${this.escapeHtml(message.content)}`;
+                }
+            }
+
+            saveEdit(id) {
+                const message = this.messages.find(m => m.id == id);
+                if (!message) return;
+
+                const textContainer = document.getElementById(`text-${id}`);
+                const textarea = textContainer.querySelector('textarea');
+                const newContent = textarea.value.trim();
+
+                if (newContent && newContent !== message.content) {
+                    message.content = newContent;
+                    this.saveMessages();
+                    textContainer.innerHTML = `<p>${newContent}</p>`;
+                    
+                    // Trigger AI response again
+                    this.showTyping();
+                    setTimeout(() => {
+                        this.hideTyping();
+                        const aiResponse = this.generateResponse(newContent);
+                        const aiMessage = {
+                            id: Date.now(),
+                            type: 'ai',
+                            content: aiResponse,
+                            timestamp: new Date().toISOString()
+                        };
+                        this.messages.push(aiMessage);
+                        this.renderMessage(aiMessage);
+                        this.saveMessages();
+                    }, 1000);
+                } else {
+                    this.cancelEdit(id);
+                }
+            }
+
+            copyToClipboard(id) {
+                const message = this.messages.find(m => m.id == id);
+                if (message) {
+                    navigator.clipboard.writeText(message.content).then(() => {
+                        this.showNotification('Message copied to clipboard!');
+                    });
+                }
+            }
+        }
+
+        // Global functions for quick messages and menu actions
+        function scrollToBottom() {
+            if (chatApp) {
+                chatApp.scrollToBottom();
+            }
+        }
+
+        function sendQuickMessage(message) {
+            const input = document.getElementById('message-input');
+            input.value = message;
+            input.focus();
+            chatApp.updateCharCount();
+            chatApp.updateSendButton();
+            chatApp.sendMessage();
+        }
+
+        function clearChat() {
+            if (confirm('Are you sure you want to clear all chat messages? This cannot be undone.')) {
+                chatApp.initializeFreshChat();
+            }
+        };
+                chatApp.messages.push(welcomeMessage);
+                chatApp.renderMessage(welcomeMessage);
+                chatApp.saveMessages();
+            }
+        }
+
+        function exportChat() {
+            const data = {
+                sessionId: sessionManager.sessionId,
+                userId: sessionManager.userId,
+                plan: sessionManager.currentPlan,
+                messages: chatApp.messages,
+                exportedAt: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bestie-chat-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            chatApp.showNotification('Chat exported successfully!');
+        }
+
+        // Initialize the chat application when page loads
+        let chatApp;
+        document.addEventListener('DOMContentLoaded', () => {
+            chatApp = new AIChatApp();
+        });
+
+        // Handle page visibility changes (for session management)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && sessionManager.isAuthenticated) {
+                sessionManager.extendSession();
+            }
+        });
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

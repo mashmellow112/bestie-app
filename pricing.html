@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - Bestie App</title>
+    <link rel="icon" type="image/jpeg" href="assets/img/Screenshot%202026-04-22%20235700.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'outfit': ['Outfit', 'sans-serif'] },
+                    colors: {
+                        'bestie-pink': '#FF6B9D',
+                        'bestie-purple': '#C084FC',
+                        'bestie-cyan': '#22D3EE',
+                        'bestie-dark': '#0A0A0F',
+                        'bestie-card': '#12121A',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0A0A0F;
+            background-image: 
+                radial-gradient(circle at top right, rgba(255, 107, 157, 0.15), transparent 50%),
+                radial-gradient(circle at bottom left, rgba(192, 132, 252, 0.15), transparent 50%);
+            background-attachment: fixed;
+        }
+        .glass-card {
+            background: rgba(18, 18, 26, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .glass-card:hover {
+            border-color: rgba(255, 107, 157, 0.3);
+            transform: translateY(-10px);
+        }
+        .popular-ring {
+            position: relative;
+            border: 1px solid #C084FC;
+            box-shadow: 0 0 20px rgba(192, 132, 252, 0.2);
+        }
+    </style>
+</head>
+<body class="font-outfit text-white min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="p-6">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-bestie-pink to-bestie-purple flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </div>
+                <span class="text-xl font-bold">Bestie</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="pt-12 pb-16 px-6 text-center">
+        <div class="max-w-3xl mx-auto" id="header-anim">
+            <h1 class="text-4xl md:text-6xl font-black mb-4">Simple, <span class="text-bestie-cyan">Affordable</span></h1>
+            <p class="text-gray-400 text-lg md:text-xl">Start free, upgrade when you're ready. No hidden fees.</p>
+        </div>
+    </header>
+
+    <!-- Pricing Grid -->
+    <section class="max-w-6xl mx-auto px-6 pb-24">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <!-- Daily Pass -->
+            <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center pricing-card">
+                <h3 class="text-xl font-semibold text-gray-400 mb-4">Daily Pass</h3>
+                <div class="flex items-baseline gap-1 mb-8">
+                    <span class="text-4xl font-black">UGX 5K</span>
+                    <span class="text-gray-500">/day</span>
+                </div>
+                <ul class="space-y-4 mb-10 w-full text-sm">
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> AI Conversations</li>
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Daily Tips</li>
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 24hr Access</li>
+                </ul>
+                <a href="payment.html?plan=daily" class="w-full py-4 text-center bg-white/5 border border-white/10 rounded-2xl font-bold hover:bg-white/10 transition-all">Get Started</a>
+            </div>
+
+            <!-- Weekly Pass -->
+            <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center popular-ring pricing-card scale-105">
+                <span class="absolute -top-4 bg-bestie-purple px-4 py-1 rounded-full text-xs font-bold tracking-widest uppercase">Most Popular</span>
+                <h3 class="text-xl font-semibold text-gray-400 mb-4">Weekly Pass</h3>
+                <div class="flex items-baseline gap-1 mb-8">
+                    <span class="text-4xl font-black">UGX 15K</span>
+                    <span class="text-gray-500">/week</span>
+                </div>
+                <ul class="space-y-4 mb-10 w-full text-sm">
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Unlimited AI Conversations</li>
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Daily Tips & Check-ins</li>
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Love Language Quiz</li>
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Date Ideas Generator</li>
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 7 Days Access</li>
+                </ul>
+                <a href="payment.html?plan=weekly" class="w-full py-4 text-center bg-gradient-to-r from-bestie-pink to-bestie-purple rounded-2xl font-bold shadow-lg shadow-bestie-pink/20 hover:scale-105 transition-all">Get Started</a>
+            </div>
+
+            <!-- Monthly Pass -->
+            <div class="glass-card p-8 rounded-[2.5rem] flex flex-col items-center pricing-card">
+                <h3 class="text-xl font-semibold text-gray-400 mb-4">Monthly Pass</h3>
+                <div class="flex items-baseline gap-1 mb-8">
+                    <span class="text-4xl font-black">UGX 25K</span>
+                    <span class="text-gray-500">/month</span>
+                </div>
+                <ul class="space-y-4 mb-10 w-full text-sm">
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Unlimited Everything</li>
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> All Premium Features</li>
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Community Access</li>
+                    <li class="flex items-center gap-3"><svg class="w-5 h-5 text-bestie-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 30-Day Access</li>
+                </ul>
+                <a href="payment.html?plan=monthly" class="w-full py-4 text-center bg-white/5 border border-white/10 rounded-2xl font-bold hover:bg-white/10 transition-all">Get Started</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="max-w-4xl mx-auto px-6 pb-32">
+        <div class="glass-card p-12 rounded-[3rem] text-center relative overflow-hidden" id="cta-anim">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-bestie-pink via-bestie-purple to-bestie-cyan"></div>
+            <h2 class="text-3xl md:text-5xl font-black mb-6">Ready to Level Up Your Relationships?</h2>
+            <p class="text-gray-400 text-lg mb-10">Join thousands of happy users who improved their relationships with Bestie.</p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="javascript:void(0)" onclick="startTrial()" class="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-bestie-pink to-bestie-purple rounded-full font-bold text-lg hover:shadow-[0_0_30px_rgba(255,107,157,0.4)] transition-all">
+                    Start Free Trial
+                </a>
+                <a href="demo.html" class="w-full sm:w-auto px-10 py-4 bg-white/5 border border-white/10 rounded-full font-bold text-lg hover:bg-white/10 transition-all">
+                    Try Demo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-white/5 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2 opacity-50">
+                <div class="w-6 h-6 rounded bg-gradient-to-br from-bestie-pink to-bestie-purple flex items-center justify-center">
+                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </div>
+                <span class="text-sm">© 2026 Bestie App.</span>
+            </div>
+            <div class="flex gap-6 text-sm text-gray-500">
+                <a href="privacy.html" class="hover:text-white">Privacy</a>
+                <a href="terms.html" class="hover:text-white">Terms</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tl = gsap.timeline();
+            
+            // Entrance Animations
+            tl.from("#header-anim", {
+                duration: 1,
+                y: 50,
+                opacity: 0,
+                ease: "power4.out"
+            })
+            .to(".pricing-card", {
+                duration: 0.8,
+                y: 0,
+                opacity: 1,
+                stagger: 0.2,
+                ease: "power3.out"
+            }, "-=0.5")
+            .to("#cta-anim", {
+                duration: 1,
+                scale: 1,
+                opacity: 1,
+                ease: "back.out(1.7)"
+            }, "-=0.2");
+        });
+
+        function startTrial() {
+            // Set a 24-hour trial session
+            localStorage.setItem('bestie_payment_completed', 'true');
+            localStorage.setItem('bestie_plan', 'trial');
+            const expiry = Date.now() + (24 * 60 * 60 * 1000); 
+            localStorage.setItem('bestie_session_expiry', expiry.toString());
+            window.location.href = 'chat.html';
+        }
+    </script>
+</body>
+</html>

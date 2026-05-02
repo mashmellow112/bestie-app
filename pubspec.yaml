@@ -1,0 +1,25 @@
+name: bestie_app
+description: A new Flutter project for Bestie AI Relationship Coach.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  intl: ^0.18.1
+  google_fonts: ^6.1.0
+  shared_preferences: ^2.2.2
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/img/pic.jpg

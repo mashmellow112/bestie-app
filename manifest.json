@@ -1,0 +1,21 @@
+{
+  "name": "Bestie - AI Relationship Coach",
+  "short_name": "Bestie",
+  "description": "Your cinematic and empathetic AI relationship coach for Gen Z.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0A0A0F",
+  "theme_color": "#FF6B9D",
+  "icons": [
+    {
+      "src": "assets/img/Screenshot%202026-04-22%20235700.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/img/Screenshot%202026-04-22%20235700.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

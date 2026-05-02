@@ -1,0 +1,50 @@
+{
+  "api": {
+    "baseUrl": "/api",
+    "endpoints": {
+      "chat": "/api/chat",
+      "session": "/api/session",
+      "validate": "/api/validate"
+    }
+  },
+  "responses": {
+    "greeting": [
+      "Hello! I'm your AI relationship coach. I'm here to help you navigate relationships with confidence and clarity. What would you like to talk about today?",
+      "Hi there! I'm Bestie, your personal AI relationship assistant. I can help with dating advice, communication tips, relationship guidance, and more. What's on your mind?",
+      "Welcome! I'm here to support you in your relationship journey. Whether you need advice about dating, communication, or personal growth, I'm here to help. How can I assist you today?"
+    ],
+    "dating": [
+      "Dating can be exciting but also challenging! Here are some tips: 1) Be yourself and communicate openly, 2) Listen actively to your date, 3) Take things at a comfortable pace, 4) Pay attention to red flags, 5) Have fun and be present in the moment. What specific aspect of dating would you like advice on?",
+      "When it comes to dating, authenticity is key. People can usually tell when someone is being genuine versus putting on an act. Focus on shared interests, good communication, and mutual respect. Have you been on any recent dates that you'd like to discuss?"
+    ],
+    "communication": [
+      "Effective communication is the foundation of healthy relationships. Try using 'I' statements instead of 'you' statements (e.g., 'I feel hurt when...' instead of 'You always...'). Active listening, empathy, and regular check-ins are also crucial. How has communication been in your relationships?",
+      "Communication styles vary between individuals. Some people are direct, others are more subtle. The key is finding a balance that works for both partners. Practice expressing your needs clearly while also being receptive to your partner's perspective."
+    ],
+    "boundaries": [
+      "Setting healthy boundaries is essential for any relationship. Boundaries protect your emotional well-being and help maintain mutual respect. Start by identifying what you need, communicate them clearly, and be consistent in enforcing them. What kind of boundaries are you working on establishing?",
+      "Boundaries aren't about building walls; they're about defining what healthy interactions look like for you. It's okay to say no, to ask for space, and to prioritize your own needs. Remember, healthy boundaries actually strengthen relationships by creating trust and security."
+    ],
+    "conflict": [
+      "Conflict is a normal part of relationships, but how you handle it makes all the difference. Stay calm, listen to understand rather than to respond, avoid blame, and focus on finding solutions together. Sometimes taking a break to cool down can help. What kind of conflict are you dealing with?",
+      "During disagreements, try to remember that you're on the same team. Use 'we' language, validate each other's feelings, and work toward compromise. If emotions run high, suggest continuing the conversation later when both parties are calmer."
+    ],
+    "questions": [
+      "I'd love to help you with that! Can you tell me more about your situation? Understanding the context will help me give you more specific and useful advice.",
+      "That's an interesting question. To give you the best advice, could you share a bit more about what's going on? I'm here to listen and provide guidance tailored to your needs.",
+      "Thanks for sharing that with me. Relationships can be complex, and every situation is unique. What are your goals or what outcome are you hoping for in this situation?"
+    ]
+  },
+  "fallback": "I'm here to listen and help with your relationship questions. While I'm still learning, I can offer general advice about communication, dating, and healthy relationships. What specific topic would you like to explore?",
+  "session": {
+    "maxMessages": 1000,
+    "retentionDays": 30,
+    "premiumFeatures": [
+      "Unlimited conversations",
+      "Priority responses",
+      "Advanced relationship analysis",
+      "Custom advice plans",
+      "24/7 availability"
+    ]
+  }
+}
