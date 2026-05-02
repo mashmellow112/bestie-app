@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen>
   void _navigateToHome() {
     if (mounted) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => MyHomePage(title: 'Bestie Home Page')),
+        MaterialPageRoute(builder: (_) => const ChatScreen()),
       );
     }
   }
